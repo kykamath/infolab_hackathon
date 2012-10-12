@@ -6,22 +6,21 @@ Created on Oct 9, 2012
 #! /opt/local/bin/python
 from library.classes import GeneralMethods
 from library.file_io import FileIO
+from xml.etree import ElementTree
 import os
 import re
 import sys
 
 def convert_row_to_dict(row):
     #try:
-        for tag in ['Text', 'Comment', 'UserDisplayName', 'AboutMe', 'DisplayName', 'Title']:
+        for tag in ['Location', 'Text', 'Comment', 'UserDisplayName', 'AboutMe', 'DisplayName', 'Title']:
             row = re.sub('%s="( )*'%tag, '%s="'%tag, row)
         data = {}
-        print row
         for c in row[5:-2].split('" '):
             if c:
                 c+='"'
-                print c
                 if c[-2]=='=': c = c[:-2]+'= "'
-                print ' **** ', c
+                print c
                 key, value = c.split('="')
                 value=value[:-1]
                 data[key] = value
@@ -37,6 +36,13 @@ def convert_file_to_json(input_file, output_file):
             data = convert_row_to_dict(line)
             if data: FileIO.writeToFileAsJson(data, output_file)
 
+def convert_file_to_json_using_xml(input_file, output_file):
+    rows = ElementTree.iterparse(input_file)
+    for event, row in rows:
+        if row.tag=='row':
+            data = dict(row.items())
+            if data: FileIO.writeToFileAsJson(data, output_file)
+
 def copy_file(input_file, output_file):
     command = 'cp %s %s'%(input_file, output_file)
     GeneralMethods.runCommand(command)
@@ -49,6 +55,7 @@ if __name__ == '__main__':
     for file in os.listdir(input_dir):
         input_file = input_dir+'/%s'%file
         output_file = output_dir+'/%s'%file
-        if is_xml(input_file): convert_file_to_json(input_file, output_file)
+#        if is_xml(input_file): convert_file_to_json(input_file, output_file)
+        if is_xml(input_file): convert_file_to_json_using_xml(input_file, output_file)
         else: copy_file(input_file, output_file)
         
